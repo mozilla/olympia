@@ -5,14 +5,14 @@ from collections import namedtuple
 from urllib.parse import urlparse
 
 from django.conf import settings
-from django.contrib.sitemaps import Sitemap
+from django.contrib.sitemaps import Sitemap as DjangoSitemap
 from django.db.models import Count, F, Max, Q
 from django.template import loader
 from django.urls import reverse
 
 from olympia import amo
 from olympia.addons.models import Addon, AddonCategory
-from olympia.amo.reverse import get_url_prefix
+from olympia.amo.reverse import get_url_prefix, override_url_prefix
 from olympia.amo.templatetags.jinja_helpers import absolutify
 from olympia.constants.categories import CATEGORIES
 from olympia.bandwagon.models import Collection
@@ -24,6 +24,10 @@ from olympia.versions.models import License
 # https://github.com/mozilla/addons-frontend/blob/master/src/amo/reducers/addonsByAuthors.js
 EXTENSIONS_BY_AUTHORS_PAGE_SIZE = 10
 THEMES_BY_AUTHORS_PAGE_SIZE = 12
+
+
+class Sitemap(DjangoSitemap):
+    apps = amo.APP_USAGE
 
 
 class AddonSitemap(Sitemap):
@@ -116,27 +120,38 @@ class AMOSitemap(Sitemap):
     # i18n = True  # TODO: support all localized urls
     changefreq = 'always'
     lastmod = datetime.datetime.now()
+    apps = None  # because some urls are app-less, we specify per item
 
     def items(self):
         return [
             # frontend pages
-            'home',
-            'pages.about',
-            'pages.review_guide',
-            'browse.extensions',
-            'browse.extensions.categories',
-            'browse.themes',  # TODO: when we add /android, .themes are /firefox only
-            'browse.themes.categories',
-            'browse.language-tools',  # TODO: when we add /android this is /firefox only
+            ('home', amo.FIREFOX),
+            ('home', amo.ANDROID),
+            ('pages.about', None),
+            ('pages.review_guide', None),
+            ('browse.extensions', amo.FIREFOX),
+            ('browse.extensions', amo.ANDROID),
+            ('browse.extensions.categories', amo.FIREFOX),
+            ('browse.extensions.categories', amo.ANDROID),
+            ('browse.themes', amo.FIREFOX),
+            ('browse.themes.categories', amo.FIREFOX),
+            ('browse.language-tools', amo.FIREFOX),
             # server pages
-            'devhub.index',
-            'contribute.json',
-            'apps.appversions',
-            'apps.appversions.rss',
+            ('devhub.index', None),
+            ('contribute.json', None),
+            ('apps.appversions', amo.FIREFOX),
+            ('apps.appversions', amo.ANDROID),
+            ('apps.appversions.rss', amo.FIREFOX),
+            ('apps.appversions.rss', amo.ANDROID),
         ]
 
     def location(self, item):
-        return reverse(item)
+        urlname, app = item
+        if app:
+            with override_url_prefix(app_name=app.short):
+                return reverse(urlname)
+        else:
+            return reverse(urlname)
 
 
 class CategoriesSitemap(Sitemap):
@@ -144,6 +159,7 @@ class CategoriesSitemap(Sitemap):
     # i18n = True  # TODO: support all localized urls
     changefreq = 'always'
     lastmod = datetime.datetime.now()
+    apps = (amo.FIREFOX,)  # category pages aren't supported on android
 
     def items(self):
         def additems(type):
@@ -276,20 +292,26 @@ sitemaps = {
 def get_sitemap_section_pages():
     pages = []
     for section, site in sitemaps.items():
-        pages.append((section, 1))
-        # Add all pages of the sitemap section.
-        for page in range(2, site.paginator.num_pages + 1):
-            pages.append((section, page))
+        if not site.apps:
+            pages.extend((section, None, page) for page in site.paginator.page_range)
+            continue
+        for app in site.apps:
+            # Add all pages of the sitemap section.
+            pages.extend(
+                (section, app.short, page) for page in site.paginator.page_range
+            )
     return pages
 
 
-def build_sitemap(section=None, page=1):
+def build_sitemap(section, app_name, page=1):
     if not section:
         # its the index
         sitemap_url = reverse('amo.sitemap')
         urls = (
-            f'{sitemap_url}?section={section}' + ('' if page == 1 else f'&p={page}')
-            for section, page in get_sitemap_section_pages()
+            f'{sitemap_url}?section={section}'
+            + (f'&app_name={app_name}' if app_name else '')
+            + (f'&p={page}' if page != 1 else '')
+            for section, app_name, page in get_sitemap_section_pages()
         )
 
         return loader.render_to_string(
@@ -301,14 +323,15 @@ def build_sitemap(section=None, page=1):
         site_url = urlparse(settings.EXTERNAL_SITE_URL)
         # Sitemap.get_urls wants a Site instance to get the domain, so just fake it.
         site = namedtuple('FakeSite', 'domain')(site_url.netloc)
-        xml = loader.render_to_string(
-            'sitemap.xml',
-            {
-                'urlset': sitemap_object.get_urls(
-                    page=page, site=site, protocol=site_url.scheme
-                )
-            },
-        )
+        with override_url_prefix(app_name=app_name):
+            xml = loader.render_to_string(
+                'sitemap.xml',
+                {
+                    'urlset': sitemap_object.get_urls(
+                        page=page, site=site, protocol=site_url.scheme
+                    )
+                },
+            )
         # django3.2 adds the xmlns:xhtml namespace in the template
         # we can drop this after we drop support for django2.2
         return xml.replace(
@@ -318,11 +341,12 @@ def build_sitemap(section=None, page=1):
         )
 
 
-def get_sitemap_path(section=None, page=1):
+def get_sitemap_path(section, app, page=1):
     return os.path.join(
         settings.SITEMAP_STORAGE_PATH,
         'sitemap'
         + (f'-{section}' if section else '')
-        + ('' if page == 1 else f'-{page}')
+        + (f'-{app}' if app else '')
+        + (f'-{page}' if page != 1 else '')
         + '.xml',
     )
