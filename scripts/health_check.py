@@ -13,8 +13,8 @@ ENV_ENUM = Enum(
         ('dev', 'https://addons-dev.allizom.org'),
         ('stage', 'https://addons.allizom.org'),
         ('prod', 'https://addons.mozilla.org'),
-        # TODO: maybe we could use the local environmnet here
-        ('test', ''),
+        # For local environments hit the nginx container as set in docker-compose.yml
+        ('local', 'http://nginx'),
     ],
 )
 
