@@ -265,6 +265,7 @@ class TestCheckAndUpdateFxaAccessToken(TestCase):
         }
         return request
 
+    @override_settings(ENV='local')
     def test_use_fake_fxa_auth(self):
         verify.check_and_update_fxa_access_token(self.get_request(config_name='fake'))
         self.get_fxa_token_mock.assert_not_called()
