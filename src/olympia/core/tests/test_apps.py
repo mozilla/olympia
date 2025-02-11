@@ -181,6 +181,7 @@ class FileSystemCheckTests(BaseCheckTestCase):
         """Test behavior when media root directory is missing."""
         with override_settings(
             TARGET='development',
+            ENV='local',
             MEDIA_ROOT='/fake/not/real/directory',
             STATIC_ROOT=self.temp_dirs['static_root'],
             STATIC_BUILD_MANIFEST_PATH=self.manifest_path,
@@ -262,6 +263,7 @@ class ServiceStateTests(BaseCheckTestCase):
 
             with override_settings(
                 TARGET='development',
+                ENV='local',
                 MEDIA_ROOT=self.temp_dirs['media_root'],
                 STATIC_ROOT=self.temp_dirs['static_root'],
                 STATIC_BUILD_MANIFEST_PATH=self.manifest_path,

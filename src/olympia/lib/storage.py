@@ -24,5 +24,7 @@ class ManifestStaticFilesStorageNotMaps(ManifestStaticFilesStorage):
 
 
 OlympiaStaticFilesStorage = (
-    ManifestStaticFilesStorageNotMaps if settings.TARGET == 'production' else StaticFilesStorage
+    ManifestStaticFilesStorageNotMaps
+    if settings.TARGET == 'production'
+    else StaticFilesStorage
 )

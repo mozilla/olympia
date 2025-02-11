@@ -48,7 +48,7 @@ def get_css_urls(bundle):
     :param bundle:
         Name of the bundle to fetch.
     """
-    if settings.TARGET != 'production':
+    if settings.TARGET == 'production':
         return [static(f'css/{bundle}-min.css')]
     else:
         items = []
