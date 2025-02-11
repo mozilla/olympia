@@ -9,6 +9,7 @@ ENV BUILD_INFO=/build-info.json
 # Set shell to bash with logs and errors for build
 SHELL ["/bin/bash", "-xue", "-c"]
 
+ENV ENV=build
 ENV OLYMPIA_UID=9500
 # give olympia access to the HOME directory
 ENV HOME=/data/olympia

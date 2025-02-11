@@ -122,3 +122,5 @@ FXA_CONFIG = {
         'client_secret': '.',
     },
 }
+
+ENV = 'test'

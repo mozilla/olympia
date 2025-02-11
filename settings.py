@@ -195,3 +195,7 @@ if not PROD_MODE:
             'static_url_prefix': 'bundle',
         }
     }
+
+# Hardcode the environment to local to guarantee a clear distinction
+# between local and non-local environments.
+ENV = 'local'
