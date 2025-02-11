@@ -111,11 +111,12 @@ urlpatterns = [
     ),
 ]
 
-if settings.SERVE_STATIC_FILES:
+# TODO replace with ENV == 'local'
+if settings.ENV == 'local':
     from django.contrib.staticfiles.views import serve as static_serve
 
     def serve_static_files(request, path, **kwargs):
-        if settings.PROD_MODE:
+        if settings.TARGET == 'production':
             return serve_static(
                 request, path, document_root=settings.STATIC_ROOT, **kwargs
             )

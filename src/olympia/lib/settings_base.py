@@ -66,19 +66,11 @@ def path(*folders):
 # Host info that is hard coded for production images.
 HOST_UID = None
 
-# Used to determine if django should serve static files.
-# For local deployments we want nginx to proxy static file requests to the
-# uwsgi server and not try to serve them locally.
-# In production, nginx serves these files from a CDN.
-SERVE_STATIC_FILES = False
-
-# Used to determine if we are running on a production image.
-# In production environments, this should ALWAYS be True.
-PROD_MODE = get_version_json().get('target') == 'production'
+TARGET = get_version_json().get('target')
 # Debug is configurable but defaults to the opposite of prod mode.
-DEBUG = env('DEBUG', default=not PROD_MODE)
+DEBUG = env('DEBUG', default=TARGET != 'production')
 # Used to determine which set of dependencies are installed.
-OLYMPIA_DEPS = env('OLYMPIA_DEPS', default=get_version_json().get('target'))
+OLYMPIA_DEPS = env('OLYMPIA_DEPS', default=TARGET)
 
 DEBUG_TOOLBAR_CONFIG = {
     # Deactivate django debug toolbar by default.
@@ -1625,9 +1617,6 @@ SOCKET_LABS_HOST = env('SOCKET_LABS_HOST', default='https://api.socketlabs.com/v
 SOCKET_LABS_TOKEN = env('SOCKET_LABS_TOKEN', default=None)
 SOCKET_LABS_SERVER_ID = env('SOCKET_LABS_SERVER_ID', default=None)
 
-# Set to True in settings_test.py
-# This controls the behavior of migrations
-TESTING_ENV = False
 
 ENABLE_ADMIN_MLBF_UPLOAD = False
 

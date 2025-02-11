@@ -90,7 +90,7 @@ def static_check(app_configs, **kwargs):
     output = StringIO()
 
     # We only run this check in production images.
-    if not settings.PROD_MODE:
+    if settings.TARGET != 'production':
         return []
 
     try:
@@ -188,7 +188,8 @@ def db_charset_check(app_configs, **kwargs):
 def nginx_check(app_configs, **kwargs):
     errors = []
 
-    if settings.PROD_MODE:
+    # We only run this check in local environments
+    if settings.ENV != 'local':
         return []
 
     configs = [

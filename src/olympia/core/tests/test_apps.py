@@ -148,7 +148,7 @@ class FileSystemCheckTests(BaseCheckTestCase):
     def test_all_files_present_development(self):
         """Test when all required files exist in development mode."""
         with override_settings(
-            PROD_MODE=True,
+            TARGET='production',
             MEDIA_ROOT=self.temp_dirs['media_root'],
             STATIC_ROOT=self.temp_dirs['static_root'],
             STATIC_BUILD_MANIFEST_PATH=self.manifest_path,
@@ -172,7 +172,7 @@ class FileSystemCheckTests(BaseCheckTestCase):
             MEDIA_ROOT=self.temp_dirs['media_root'],
             STATIC_ROOT=self.temp_dirs['static_root'],
             STATIC_BUILD_MANIFEST_PATH=self.manifest_path,
-            PROD_MODE=True,
+            TARGET='production',
             HOST_UID='9500',
         ):
             self.assertSystemCheckRaises('Static build manifest file does not exist')
@@ -180,7 +180,7 @@ class FileSystemCheckTests(BaseCheckTestCase):
     def test_missing_media_root(self):
         """Test behavior when media root directory is missing."""
         with override_settings(
-            PROD_MODE=False,
+            TARGET='development',
             MEDIA_ROOT='/fake/not/real/directory',
             STATIC_ROOT=self.temp_dirs['static_root'],
             STATIC_BUILD_MANIFEST_PATH=self.manifest_path,
@@ -197,7 +197,7 @@ class FileSystemCheckTests(BaseCheckTestCase):
             MEDIA_ROOT=self.temp_dirs['media_root'],
             STATIC_ROOT=self.temp_dirs['static_root'],
             STATIC_BUILD_MANIFEST_PATH=self.manifest_path,
-            PROD_MODE=True,
+            TARGET='production',
             HOST_UID='9500',
         ):
             self.assertSystemCheckRaises(
@@ -261,7 +261,7 @@ class ServiceStateTests(BaseCheckTestCase):
             )
 
             with override_settings(
-                PROD_MODE=False,
+                TARGET='development',
                 MEDIA_ROOT=self.temp_dirs['media_root'],
                 STATIC_ROOT=self.temp_dirs['static_root'],
                 STATIC_BUILD_MANIFEST_PATH=self.manifest_path,
@@ -285,7 +285,7 @@ class ConfigurationTests(BaseCheckTestCase):
         for host_uid, actual_uid, expected_error in test_cases:
             self.mock_uid.return_value.pw_uid = actual_uid
             with override_settings(
-                PROD_MODE=True,
+                TARGET='production',
                 HOST_UID=host_uid,
                 MEDIA_ROOT=self.temp_dirs['media_root'],
                 STATIC_ROOT=self.temp_dirs['static_root'],
@@ -333,7 +333,7 @@ class CombinedScenariosTests(BaseCheckTestCase):
             MEDIA_ROOT='/fake/not/real/directory',
             STATIC_ROOT=self.temp_dirs['static_root'],
             STATIC_BUILD_MANIFEST_PATH='/fake/not/real.json',
-            PROD_MODE=True,
+            TARGET='production',
             HOST_UID='9500',
         ):
             self.assertSystemCheckRaises(

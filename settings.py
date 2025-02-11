@@ -18,9 +18,6 @@ WSGI_APPLICATION = 'olympia.wsgi.application'
 
 INTERNAL_ROUTES_ALLOWED = True
 
-# Always
-SERVE_STATIC_FILES = True
-
 # These apps are great during development.
 INSTALLED_APPS += ('olympia.landfill',)
 
@@ -188,7 +185,7 @@ ENABLE_ADMIN_MLBF_UPLOAD = True
 # The 'bundle' prefix is used to control routing behavior in nginx,
 # ensuring static files are not served by nginx
 # but redirected to the vite dev server.
-if not PROD_MODE:
+if TARGET != 'production':
     DJANGO_VITE = {
         'default': {
             'dev_mode': True,

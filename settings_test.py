@@ -109,9 +109,6 @@ SOCKET_LABS_TOKEN = 'fake-test-token'
 SOCKET_LABS_SERVER_ID = '12345'
 SOCKET_LABS_HOST = 'https://fake-socketlabs.com/v1/'
 
-# This is a testing environment
-TESTING_ENV = True
-
 FXA_CONFIG = {
     'default': {
         'client_id': 'amodefault',
