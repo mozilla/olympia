@@ -5,8 +5,8 @@ from django.shortcuts import redirect
 from django.urls import include, re_path, reverse
 from django.utils import translation
 from django.views.i18n import JavaScriptCatalog
-from django.views.static import serve as serve_static
 
+from olympia.amo.decorators import restrict_request_to_env
 from olympia.amo.utils import urlparams
 from olympia.amo.views import frontend_view
 from olympia.files.urls import upload_patterns
@@ -22,13 +22,24 @@ handler404 = 'olympia.amo.views.handler404'
 handler500 = 'olympia.amo.views.handler500'
 
 
-def serve_static_files(request, path, **kwargs):
-    if settings.TARGET == 'production':
-        return serve_static(request, path, document_root=settings.STATIC_ROOT, **kwargs)
-    else:
-        return static_serve(request, path, insecure=True, show_indexes=True, **kwargs)
+def serve_static(document_root, include_env):
+    from django.contrib.staticfiles.views import serve as _serve_static
+
+    @restrict_request_to_env(include_env == include_env)
+    def serve_static_wrapper(request, path, **kwargs):
+        print(f'serving static {path} from {document_root}')
+        # In production mode, strictly serve files from the specified document_root
+        if settings.TARGET == 'production':
+            return _serve_static(request, path, document_root=document_root, **kwargs)
+        else:
+            return static_serve(
+                request, path, insecure=True, show_indexes=True, **kwargs
+            )
+
+    return serve_static_wrapper
 
 
+@restrict_request_to_env(include_env=['local'])
 def serve_javascript_catalog(request, locale, **kwargs):
     with translation.override(locale):
         return JavaScriptCatalog.as_view()(request, locale, **kwargs)
@@ -128,10 +139,9 @@ urlpatterns = [
     ),
     re_path(
         r'^%s/(?P<path>.*)$' % media_url,
-        serve_static,
-        {'document_root': settings.MEDIA_ROOT},
+        serve_static(settings.MEDIA_ROOT, True),
     ),
-    # Serve javascript catalog locales bundle directly from django
+    # # Serve javascript catalog locales bundle directly from django
     re_path(
         r'^static/js/i18n/(?P<locale>\w{2,3}(?:-\w{2,6})?)\.js$',
         serve_javascript_catalog,
@@ -140,7 +150,7 @@ urlpatterns = [
     # fallback for static files that are not available directly over nginx.
     # Mostly vendor files from python or npm dependencies that are not available
     # in the static files directory.
-    re_path(r'^static/(?P<path>.*)$', serve_static_files),
+    re_path(r'^static/(?P<path>.*)$', serve_static(settings.STATIC_ROOT, 'local')),
 ]
 
 if settings.DEBUG and 'debug_toolbar' in settings.INSTALLED_APPS:

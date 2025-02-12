@@ -1,19 +1,8 @@
 #!/usr/bin/env python3
 
 import os
-import shutil
 import subprocess
 import sys
-
-
-def clean_dir(dir_path, filter):
-    if not os.path.exists(dir_path):
-        return
-
-    for item in os.listdir(dir_path):
-        item_path = os.path.join(dir_path, item)
-        if os.path.isdir(item_path) and item not in filter:
-            shutil.rmtree(item_path)
 
 
 def main(targets):
@@ -44,8 +33,13 @@ def main(targets):
     # before running this script
     if 'local' not in DOCKER_TAG or OLYMPIA_DEPS == 'production':
         print('Removing existing deps')
-        clean_dir(DEPS_DIR, ['cache'])
-        clean_dir(NPM_DEPS_DIR, [])
+        subprocess.run(
+            ['make', 'clean_directory', f"ARGS='{DEPS_DIR} --filter cache/**'"],
+            check=True,
+        )
+        subprocess.run(
+            ['make', 'clean_directory', f"ARGS='{NPM_DEPS_DIR}'"], check=True
+        )
     else:
         print('Updating existing deps')
 

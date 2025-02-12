@@ -19,13 +19,6 @@ ENV NPM_DEPS_DIR=${HOME}/node_modules
 RUN <<EOF
 groupadd -g ${OLYMPIA_UID} olympia
 useradd -u ${OLYMPIA_UID} -g ${OLYMPIA_UID} -s /sbin/nologin -d ${HOME} olympia
-
-# Create and chown olympia directories
-olympia_dirs=("${DEPS_DIR}" "${NPM_DEPS_DIR}" "${HOME}/storage")
-for dir in "${olympia_dirs[@]}"; do
-  mkdir -p ${dir}
-  chown -R olympia:olympia ${dir}
-done
 EOF
 
 
@@ -182,6 +175,7 @@ RUN \
     --mount=type=bind,src=src,target=${HOME}/src \
     --mount=type=bind,src=Makefile-docker,target=${HOME}/Makefile-docker \
     --mount=type=bind,src=scripts/update_assets.py,target=${HOME}/scripts/update_assets.py \
+    --mount=type=bind,src=scripts/clean_directory.py,target=${HOME}/scripts/clean_directory.py \
     --mount=type=bind,src=manage.py,target=${HOME}/manage.py \
     --mount=type=bind,src=package.json,target=${HOME}/package.json \
     --mount=type=bind,src=package-lock.json,target=${HOME}/package-lock.json \
