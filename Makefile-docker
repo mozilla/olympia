@@ -19,6 +19,10 @@ endif
 help_redirect:
 	@$(MAKE) help --no-print-directory
 
+.PHONY: clean_directory
+clean_directory: ## clean and recreate a directory
+	$(HOME)/scripts/clean_directory.py $(ARGS)
+
 .PHONY: check_debian_packages
 check_debian_packages: ## check the existence of multiple debian packages
 	./scripts/check_debian_packages.sh
